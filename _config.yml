@@ -1,18 +1,22 @@
 # Dependencies
 markdown:         redcarpet
-highlighter:      pygments
+pygments:      	  true
 
 # Permalinks
 permalink:        pretty
 
 # Setup
-title:            Guide to DI in Scala
+title:            'DI in Scala: guide'
 description:      'Dependency Injection in Scala using MacWire'
 url:              http://scaladi.github.io
 
 author:
   name:           'Adam Warski'
   url:            https://twitter.com/adamwarski
+
+# GH pages
+safe:             true
+lsi:              false
 
 # Custom
 sections:
