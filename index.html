@@ -78,9 +78,8 @@
 
 <p><a name="introduction"></a></p>
 
-<p><h1>Introduction</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Introduction</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p><a href="http://en.wikipedia.org/wiki/Dependency_injection">Dependency Injection (DI)</a> is a popular pattern implementing inversion of control, which encourages loose coupling between a services’ clients and service implementations.</p>
 
@@ -94,7 +93,7 @@
 
 <h2>What is Dependency Injection?</h2>
 
-<p>DI is all about decoupling client and service code (the client may happen to be an implementation of another service). Instead of creating hard links to specific service implementations, <em>references</em> to services are &quot;injected”. This makes the code easier to understand, more testable and more reusable.</p>
+<p>DI is all about decoupling client and service code (the client may happen to be an implementation of another service). Instead of creating hard links to specific service implementations, <em>references</em> to services are &quot;injected&quot;. This makes the code easier to understand, more testable and more reusable.</p>
 
 <p>The means of injecting the dependencies vary from approach to approach, but the one we will be using here is passing dependencies through constructor parameters. Other possibilities include setter/field injection, or using a service locator. Hence, the essence of DI can be summarised as <em>using constructor parameters</em>.</p>
 
@@ -150,15 +149,14 @@
 
 <p><a name="manual"></a></p>
 
-<p><h1>Manual Dependency Injection</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Manual Dependency Injection</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>An approach that is often dismissed too easily is doing dependency injection by hand. While this requires a bit more typing, when doing things manually you are free from any constraints that a framework may impose, and hence a lot of flexibility is gained.</p>
 
-<p>When using DI, we have to somehow create (wire) the object graph, that is to create instances of the given classes with the appropriate dependencies. When using framework, this task is delegated to a container. But nothing keeps us from simple writing the code!</p>
+<p>When using DI, we have to somehow create (wire) the object graph, that is create instances of the given classes with the appropriate dependencies. When using a framework, this task is delegated to a container. But nothing keeps us from simply writing the code!</p>
 
-<p>The object graph should be created as late as possible. The &quot;end of the world” is the main class of our application. If you have used DI containers before, when using manual DI with or without MacWire, you will soon re-discover the benefits of having a main method in your application.</p>
+<p>The object graph should be created as late as possible. This may be, for example, the &quot;end of the world&quot;, that is the main class of our application. If you have used DI containers before, when using manual DI with or without MacWire, you will soon re-discover the benefits of having a main method in your application.</p>
 
 <p>To be more specific, here’s a manual-DI version for our example:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
@@ -183,7 +181,7 @@
 
 <p>The first advantage of the approach presented above is type-safety: the dependency resolution is done at compile-time, so you can be sure that all dependencies are met.</p>
 
-<p>No run-time reflection is needed, which has a slight startup-time benefit (no need to scan the classpath), but also removes a lot of &quot;magic” from the code. We are only using plain Scala, and constructor parameters. It is possible to navigate to the place where the instance is created. The process of creating the object graph is clear. The application is also simple to use, and can be easily packaged e.g. as a fat-jar. No containers to start, no frameworks to fight.</p>
+<p>No run-time reflection is needed, which has a slight startup-time benefit (no need to scan the classpath), but also removes a lot of &quot;magic&quot; from the code. We are only using plain Scala, and constructor parameters. It is possible to navigate to the place where the instance is created. The process of creating the object graph is clear. The application is also simple to use, and can be easily packaged e.g. as a fat-jar. No containers to start, no frameworks to fight against.</p>
 
 <p>If creating an instance of some object is complex, or choosing an implementation depends on some configuration, thanks to the flexibility of manual DI, we can easily run arbitrary code which should compute the dependency to use.</p>
 
@@ -214,9 +212,8 @@
 </code></pre></div>
 <p><a name="macwire"></a></p>
 
-<p><h1>Using MacWire for wiring</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Using MacWire for wiring</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>Manual DI isn’t of course a silver bullet. Manually writing new instance creation code for each class, using the correct parameters may be tedious.</p>
 
@@ -239,11 +236,11 @@
 </code></pre></div>
 <p>If a new dependency is added to a service or if the order of parameters changes, the object-graph wiring code doesn’t have to be altered; the macro will take care of that. Only when introducing a new service, it must be added to the list.</p>
 
-<p>The code is generated at <em>compile time</em>, so if you compare the byte code generated by both examples, it will be identical. The generated code is type-checked in the usual way, so we keep the type-safety of the manual approach.</p>
+<p>The new instance creation code is generated by <code>wire</code> at <em>compile time</em>, so if you compare the byte code generated by both examples, it will be identical. The generated code is type-checked in the usual way, so we keep the type-safety of the manual approach.</p>
 
 <p>Usage of the <code>wire</code> macro can be mixed with creating new instances by hand; this may be needed if, as discussed earlier, creating a new instance isn’t that straightforward.</p>
 
-<p>To access <code>wire</code>, you can either import the <code>com.softwaremill.macwire.MacwireMacros</code> object, or extend the <code>Macwire</code> trait. For details on how to integrate MacWire into your project, see the <a href="https://github.com/adamw/macwire">github page</a>.</p>
+<p>To access <code>wire</code>, you can either import the <code>com.softwaremill.macwire.MacwireMacros</code> object, or extend the <code>Macwire</code> trait. For details on how to integrate MacWire into your project, see the <a href="https://github.com/adamw/macwire">GitHub page</a>.</p>
 
 <h2>How <code>wire</code> works</h2>
 
@@ -266,13 +263,12 @@
 
 <p><a name="simplescopes"></a></p>
 
-<p><h1>Simple scoping</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Simple scoping</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>So far all of the dependencies have been declared as <code>lazy val</code>s, making them essentially singletons in the scope of a single app usage. Note that these aren’t singletons in the global sense, as we can create multiple copies of the object graph.</p>
 
-<p>However, sometimes we want to create new instances of a dependency for each usage (sometimes called the &quot;dependent scope”). To achieve this, we can simply declare the instance as a <code>def</code>, instead of a <code>lazy val</code>. If, for example, we needed a new instance of the train dispatcher each time, the code would become:</p>
+<p>However, sometimes we want to create new instances of a dependency for each usage (sometimes called the &quot;dependent scope&quot;). To achieve this, we can simply declare the instance as a <code>def</code>, instead of a <code>lazy val</code>. If, for example, we needed a new instance of the train dispatcher each time, the code would become:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
    <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
    <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
@@ -297,15 +293,14 @@
 
 <p><a name="modules"></a></p>
 
-<p><h1>Modularising object graph creation</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Modularising object graph creation</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <h2>Thin cake pattern</h2>
 
-<p>At some point, creating the whole object graph at &quot;the end of the world” will become unpractical, and the code large and hard to read. We should then somehow divide it to smaller pieces. Luckily, Scala’s <code>trait</code>s fit perfectly for that task; they can be used to split the object graph creation code.</p>
+<p>At some point, creating the whole object graph at &quot;the end of the world&quot; will become unpractical, and the code large and hard to read. We should then somehow divide it to smaller pieces. Luckily, Scala’s <code>trait</code>s fit perfectly for that task; they can be used to split the object graph creation code.</p>
 
-<p>In each trait, which for purpose of this task is also called a &quot;module”, part of the object graph is created. Everything is later re-combined by putting all the necessary traits together.</p>
+<p>In each trait, which for purpose of this task is also called a &quot;module&quot;, part of the object graph is created. Everything is later re-combined by putting all the necessary traits together.</p>
 
 <p>There may be various rules on how to divide code into modules. A good place to start is to consider creating a pre-wired module per-package. Each package should contain a group of classes sharing or implementing some specific functionality. Most probably these classes cooperate in some way, and hence can be wired.</p>
 
@@ -399,7 +394,6 @@
 <p>For example, we could express the dependency between the shunting and loading modules and the station module by extending trait-module, instead of using the abstract members:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
    <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
-
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span> 
@@ -408,7 +402,6 @@
 
 <span class="k">package</span> <span class="nn">loading</span> <span class="o">{</span>
    <span class="k">trait</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
-
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">]</span> 
 
@@ -423,7 +416,6 @@
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">]</span>
 
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
-
    <span class="o">}</span>
 <span class="o">}</span>
 
@@ -441,9 +433,8 @@
 
 <p><a name="multiple"></a></p>
 
-<p><h1>Multiple implementations</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Multiple implementations</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>Often there are cases when we have multiple implementations for some functionality, and we need to choose one depending on configuration. This can be modelled in at least two ways.</p>
 
@@ -523,9 +514,8 @@
 
 <p><a name="testing"></a></p>
 
-<p><h1>Testing</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Testing</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>Individual components can be tested by providing mock/stub implementations of some of the dependencies.</p>
 
@@ -563,9 +553,8 @@
 </code></pre></div>
 <p><a name="interceptors"></a></p>
 
-<p><h1>Interceptors</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Interceptors</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>Interceptors are very useful for implementing cross-cutting concerns, and are a part of almost every DI framework/container. While there’s no direct support for interceptors in Scala, with a thin library layer (provided by MacWire), it is easy to write and use interceptors.</p>
 
@@ -615,13 +604,12 @@
 </code></pre></div>
 <p><a name="advscopes"></a></p>
 
-<p><h1>Advanced scoping</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Advanced scoping</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>Especially in web applications, it is useful to have scopes other than singleton and dependent - e.g. scopes tied to the duration of a request, or scopes tied to a user sessions. </p>
 
-<p>Like interceptors, a lot of the DI containers/frameworks contain support for different scopes. They may seem &quot;magical”, however they are in fact pretty simple.</p>
+<p>Like interceptors, a lot of the DI containers/frameworks contain support for different scopes. They may seem &quot;magical&quot;, however they are in fact pretty simple.</p>
 
 <p>MacWire contains a general skeleton for defining scopes, similar to interceptors. The <code>Scope</code> trait defines two methods: <code>apply</code>, which when applied to an instance should create a scoped value, and <code>get</code>, to get the current underlying value of the scope. The scope’s life cycle is entirely managed by the implementor.</p>
 
@@ -634,11 +622,10 @@
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
 
       <span class="k">def</span> <span class="n">session</span><span class="k">:</span> <span class="kt">Scope</span>
-
    <span class="o">}</span>
 <span class="o">}</span>
 </code></pre></div>
-<p>When starting the application, we need to provide the implementation of the scope. Two implementations are shipped by default, a <code>NoOpScope</code> (useful for testing), and a <code>ThreadLocalScope</code>, which holds the &quot;current” scoped value in a thread-local variable (hence this implementation is only useful for synchronous web frameworks); the thread-local scope needs to be associated with a storage before each request:</p>
+<p>When starting the application, we need to provide the implementation of the scope. Two implementations are shipped by default, a <code>NoOpScope</code> (useful for testing), and a <code>ThreadLocalScope</code>, which holds the &quot;current&quot; scoped value in a thread-local variable (hence this implementation is only useful for synchronous web frameworks); the thread-local scope needs to be associated with a storage before each request:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
    <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span>
       <span class="k">with</span> <span class="nc">LoadingModule</span>
@@ -657,9 +644,8 @@
 
 <p><a name="dynamic"></a></p>
 
-<p><h1>Accessing the object graph dynamically</h1></p>
-
-<p><a href="#top">Back to top</a> </p>
+<p><h1>Accessing the object graph dynamically</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
 
 <p>While it would be great to be able to define in a type-safe way the whole object graph for an application upfront, there are cases when it is necessary to access and extend it dynamically. </p>
 
@@ -695,11 +681,11 @@
 <p>For an example of integrating Dependency Injection and MacWire with Play! Framework, see the <a href="http://typesafe.com/activator/template/macwire-activator">Play+MacWire</a> activator.  </p>
 
 <p class="message">
-  Created using <a href="https://github.com/poole/poole">poole</a> and <a href="http://jekyllrb.com/">jekyll</a>.
+  Created using <a href="https://github.com/poole/poole">poole</a> and <a href="http://jekyllrb.com/">jekyll</a>. 
+
+  <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a>
 </p>
 
-
-      <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a>
     </div>
 
 <script>
