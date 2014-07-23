@@ -1,6 +1,6 @@
 # Dependencies
 markdown:         redcarpet
-pygments:      	  true
+highlighter:      pygments
 
 # Permalinks
 permalink:        pretty
@@ -13,10 +13,6 @@ url:              http://scaladi.github.io
 author:
   name:           'Adam Warski'
   url:            https://twitter.com/adamwarski
-
-# GH pages
-safe:             true
-lsi:              false
 
 # Custom
 sections:

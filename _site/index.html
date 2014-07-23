@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    Dependency Injection in Scala using MacWire &middot; DI in Scala: guide
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body>
+  	<a href="https://github.com/scaladi/scaladi.github.io"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1>DI in Scala: guide</h1>
+      <p class="lead">Dependency Injection in Scala using MacWire</p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item">
+        <a href="/">Home</a>
+      </li>
+
+      <li class="sidebar-nav-item"><a href="https://github.com/adamw/macwire">MacWire on GitHub</a></li>
+      <li class="sidebar-nav-item"><a href="http://www.warski.org">Adam Warski's blog</a></li>
+      <li class="sidebar-nav-item">
+        <a href="https://twitter.com/share" class="twitter-share-button" data-text="Dependency injection in Scala: guide" data-via="adamwarski">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+      </li>
+    </ul>
+
+    <p>&copy; 2014. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <p><a name="top"></a></p>
+
+<h1>Table of contents</h1>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#manual">Manual Dependency Injection</a></li>
+<li><a href="#macwire">Using MacWire for wiring</a></li>
+<li><a href="#simplescopes">Simple scoping</a></li>
+<li><a href="#modules">Modularising object graph creation</a></li>
+<li><a href="#multiple">Multiple implementations</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#interceptors">Interceptors</a></li>
+<li><a href="#advscopes">Advanced scoping</a></li>
+<li><a href="#dynamic">Accessing the object graph dynamically</a></li>
+</ul>
+
+<p><a name="introduction"></a></p>
+
+<p><h1>Introduction</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p><a href="http://en.wikipedia.org/wiki/Dependency_injection">Dependency Injection (DI)</a> is a popular pattern implementing inversion of control, which encourages loose coupling between a services’ clients and service implementations.</p>
+
+<p>This guide describes how to do Dependency Injection using the Scala language constructs as much as possible, while remaining practical, with the help of the <a href="https://github.com/adamw/macwire">MacWire</a> library where necessary. </p>
+
+<p>Dependency Injection is a <em>simple</em> concept, and it can be implemented using relatively few <em>simple</em> constructs. We should avoid over-complicating and over-using containers or frameworks, without thoroughly analysing the costs.</p>
+
+<p class="message">
+  This guide is <a href="https://github.com/scaladi/scaladi.github.io">available on GitHub</a>, so if you think something is missing, not clear enough, or can be done better, don't hesitate and send a pull request!
+</p>
+
+<h2>What is Dependency Injection?</h2>
+
+<p>DI is all about decoupling client and service code (the client may happen to be an implementation of another service). Instead of creating hard links to specific service implementations, <em>references</em> to services are &quot;injected”. This makes the code easier to understand, more testable and more reusable.</p>
+
+<p>The means of injecting the dependencies vary from approach to approach, but the one we will be using here is passing dependencies through constructor parameters. Other possibilities include setter/field injection, or using a service locator. Hence, the essence of DI can be summarised as <em>using constructor parameters</em>.</p>
+
+<p>If you are not yet sold on DI, I recommend reading the <a href="https://github.com/google/guice/wiki/Motivation">motivation behind Guice</a>. It uses Java as the base language, but the ideas are the same and apply universally.</p>
+
+<h2>Other approaches</h2>
+
+<p>There are numerous frameworks and approaches implementing DI in various languages and on various platforms. Below are a couple of alternatives to the pure Scala+MacWire approach presented here.</p>
+
+<p>Using frameworks:</p>
+
+<ul>
+<li><a href="https://github.com/dickwall/subcut">Subcut</a>: mix of the service locator/dependency injection patterns</li>
+<li><a href="http://scaldi.org/">Scaldi</a>: similar to Subcut</li>
+<li><a href="http://spring.io/">Spring</a>: Spring is a very popular Java DI framework (and much more). It also works for Scala.</li>
+<li><a href="https://github.com/google/guice">Guice</a>: another popular Java DI framework</li>
+</ul>
+
+<p>Using pure Scala:</p>
+
+<ul>
+<li><a href="http://jonasboner.com/2008/10/06/real-world-scala-dependency-injection-di/">Cake pattern</a></li>
+<li><a href="http://blog.originate.com/blog/2013/10/21/reader-monad-for-dependency-injection/">Reader monad</a></li>
+</ul>
+
+<h2>Running example</h2>
+
+<p>To provide code examples throughout the guide, we will need a running example. </p>
+
+<p>Suppose we are creating a system for a train station. Our goal is to call the method to prepare (load, compose cars) and dispatch the next train. In order to do that, we need to instantiate the following service classes:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">PointSwitcher</span><span class="o">()</span>
+<span class="k">class</span> <span class="nc">TrainCarCoupler</span><span class="o">()</span>
+<span class="k">class</span> <span class="nc">TrainShunter</span><span class="o">(</span>
+   <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">,</span> 
+   <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span><span class="o">)</span>
+
+<span class="k">class</span> <span class="nc">CraneController</span><span class="o">()</span>
+<span class="k">class</span> <span class="nc">TrainLoader</span><span class="o">(</span>
+   <span class="n">craneController</span><span class="k">:</span> <span class="kt">CraneController</span><span class="o">,</span> 
+   <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">)</span>
+
+<span class="k">class</span> <span class="nc">TrainDispatch</span><span class="o">()</span>
+
+<span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
+   <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
+   <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">,</span> 
+   <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span><span class="o">)</span> <span class="o">{</span>
+
+   <span class="k">def</span> <span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>The dependencies of each class are expressed as constructor parameters. The dependencies form an object graph, which needs to be wired.  </p>
+
+<p><a name="manual"></a></p>
+
+<p><h1>Manual Dependency Injection</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>An approach that is often dismissed too easily is doing dependency injection by hand. While this requires a bit more typing, when doing things manually you are free from any constraints that a framework may impose, and hence a lot of flexibility is gained.</p>
+
+<p>When using DI, we have to somehow create (wire) the object graph, that is to create instances of the given classes with the appropriate dependencies. When using framework, this task is delegated to a container. But nothing keeps us from simple writing the code!</p>
+
+<p>The object graph should be created as late as possible. The &quot;end of the world” is the main class of our application. If you have used DI containers before, when using manual DI with or without MacWire, you will soon re-discover the benefits of having a main method in your application.</p>
+
+<p>To be more specific, here’s a manual-DI version for our example:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">PointSwitcher</span><span class="o">()</span>
+   <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainCarCoupler</span><span class="o">()</span>
+   <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainShunter</span><span class="o">(</span>
+      <span class="n">pointSwitcher</span><span class="o">,</span> <span class="n">trainCarCoupler</span><span class="o">)</span>
+
+   <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">CraneController</span><span class="o">()</span>
+   <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainLoader</span><span class="o">(</span>
+      <span class="n">craneController</span><span class="o">,</span> <span class="n">pointSwitcher</span><span class="o">)</span> 
+
+   <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainDispatch</span><span class="o">()</span>
+
+   <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainStation</span><span class="o">(</span>
+     <span class="n">trainShunter</span><span class="o">,</span> <span class="n">trainLoader</span><span class="o">,</span> <span class="n">trainDispatch</span><span class="o">)</span>
+
+   <span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>
+<span class="o">}</span>
+</code></pre></div>
+<h2>Advantages of Manual DI</h2>
+
+<p>The first advantage of the approach presented above is type-safety: the dependency resolution is done at compile-time, so you can be sure that all dependencies are met.</p>
+
+<p>No run-time reflection is needed, which has a slight startup-time benefit (no need to scan the classpath), but also removes a lot of &quot;magic” from the code. We are only using plain Scala, and constructor parameters. It is possible to navigate to the place where the instance is created. The process of creating the object graph is clear. The application is also simple to use, and can be easily packaged e.g. as a fat-jar. No containers to start, no frameworks to fight.</p>
+
+<p>If creating an instance of some object is complex, or choosing an implementation depends on some configuration, thanks to the flexibility of manual DI, we can easily run arbitrary code which should compute the dependency to use.</p>
+
+<h2><code>val</code> vs. <code>lazy val</code></h2>
+
+<p>Defining dependencies using <code>val</code>s has one drawback: if a dependency is used, before being initialised, it will be <code>null</code> when referenced. That is because <code>val</code>s are calculated from top to bottom.</p>
+
+<p>This can be solved by using <code>lazy val</code>s, which are calculated on-demand, and the right initialisation order will be calculated automatically.</p>
+
+<p>Hence our manual-DI example becomes:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">PointSwitcher</span><span class="o">()</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainCarCoupler</span><span class="o">()</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainShunter</span><span class="o">(</span>
+      <span class="n">pointSwitcher</span><span class="o">,</span> <span class="n">trainCarCoupler</span><span class="o">)</span>
+
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">CraneController</span><span class="o">()</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainLoader</span><span class="o">(</span>
+      <span class="n">craneController</span><span class="o">,</span> <span class="n">pointSwitcher</span><span class="o">)</span> 
+
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainDispatch</span><span class="o">()</span> 
+
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainStation</span><span class="o">(</span>
+      <span class="n">trainShunter</span><span class="o">,</span> <span class="n">trainLoader</span><span class="o">,</span> <span class="n">trainDispatch</span><span class="o">)</span> 
+
+   <span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> 
+<span class="o">}</span>
+</code></pre></div>
+<p><a name="macwire"></a></p>
+
+<p><h1>Using MacWire for wiring</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>Manual DI isn’t of course a silver bullet. Manually writing new instance creation code for each class, using the correct parameters may be tedious.</p>
+
+<p>That is where <a href="https://github.com/adamw/macwire">MacWire</a> and the <code>wire</code> method can help. <code>wire</code> is a <a href="http://scalamacros.org/">Scala Macro</a>, which generates the new instance creation code. </p>
+
+<p>After using MacWire, the code becomes simpler:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span>
+
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">]</span> 
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">]</span>
+
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+
+   <span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> 
+<span class="o">}</span> 
+</code></pre></div>
+<p>If a new dependency is added to a service or if the order of parameters changes, the object-graph wiring code doesn’t have to be altered; the macro will take care of that. Only when introducing a new service, it must be added to the list.</p>
+
+<p>The code is generated at <em>compile time</em>, so if you compare the byte code generated by both examples, it will be identical. The generated code is type-checked in the usual way, so we keep the type-safety of the manual approach.</p>
+
+<p>Usage of the <code>wire</code> macro can be mixed with creating new instances by hand; this may be needed if, as discussed earlier, creating a new instance isn’t that straightforward.</p>
+
+<p>To access <code>wire</code>, you can either import the <code>com.softwaremill.macwire.MacwireMacros</code> object, or extend the <code>Macwire</code> trait. For details on how to integrate MacWire into your project, see the <a href="https://github.com/adamw/macwire">github page</a>.</p>
+
+<h2>How <code>wire</code> works</h2>
+
+<p>Given a class, the <code>wire</code> macro first inspects the primary constructor, to determine the dependencies needed. For each dependency it then looks for a value which is a subtype of the parameter’s type, in the enclosing method/class/object:</p>
+
+<ul>
+<li>first it tries to find a value declared in the enclosing method; if multiple values are found, a by-name match is attempted</li>
+<li>then it tries to find a unique value declared in the enclosing type</li>
+<li>finally it tries to find a unique value in parent types (traits/classes)</li>
+</ul>
+
+<p>Here value can be either a <code>val</code>, <code>lazy val</code> or a no-parameter <code>def</code>, as long as the return type matches.</p>
+
+<p>A compile-time error occurs if:</p>
+
+<ul>
+<li>there are multiple values of a given type in the enclosing type, or in parent types</li>
+<li>there is no value of a given type<br></li>
+</ul>
+
+<p><a name="simplescopes"></a></p>
+
+<p><h1>Simple scoping</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>So far all of the dependencies have been declared as <code>lazy val</code>s, making them essentially singletons in the scope of a single app usage. Note that these aren’t singletons in the global sense, as we can create multiple copies of the object graph.</p>
+
+<p>However, sometimes we want to create new instances of a dependency for each usage (sometimes called the &quot;dependent scope”). To achieve this, we can simply declare the instance as a <code>def</code>, instead of a <code>lazy val</code>. If, for example, we needed a new instance of the train dispatcher each time, the code would become:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span>
+
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">]</span>
+
+   <span class="c1">// note the def instead of lazy val</span>
+   <span class="k">def</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">]</span> 
+
+   <span class="c1">// the stations share all services except the train dispatch,</span>
+   <span class="c1">// for which a new instance is create on each usage</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStationEast</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStationWest</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+
+   <span class="n">trainStationEast</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> 
+   <span class="n">trainStationWest</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> 
+<span class="o">}</span>  
+</code></pre></div>
+<p>Hence, using Scala constructs we can implement two scopes: singleton and dependent.  </p>
+
+<p><a name="modules"></a></p>
+
+<p><h1>Modularising object graph creation</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<h2>Thin cake pattern</h2>
+
+<p>At some point, creating the whole object graph at &quot;the end of the world” will become unpractical, and the code large and hard to read. We should then somehow divide it to smaller pieces. Luckily, Scala’s <code>trait</code>s fit perfectly for that task; they can be used to split the object graph creation code.</p>
+
+<p>In each trait, which for purpose of this task is also called a &quot;module”, part of the object graph is created. Everything is later re-combined by putting all the necessary traits together.</p>
+
+<p>There may be various rules on how to divide code into modules. A good place to start is to consider creating a pre-wired module per-package. Each package should contain a group of classes sharing or implementing some specific functionality. Most probably these classes cooperate in some way, and hence can be wired.</p>
+
+<p>The additional benefit of shipping a package not only with the code, but also with a wired object graph fragment, is that it is more clear how the code should be used. There are no requirements on actually using the wired module, so if needed, wiring can be done in a different way.</p>
+
+<p>However, such modules can’t usually exist stand-alone: very often they will depend on some classes from other modules. There are two ways of expressing dependencies.</p>
+
+<h2>Expressing dependencies via abstract members</h2>
+
+<p>As each module is a trait, it is possible to leave some dependencies undefined, as abstract members. Such abstract members can be used when wiring (either manually or using the <code>wire</code> macro), but the specific implementation doesn’t have to be given.</p>
+
+<p>When all the modules are combined in the end application, the compiler will verify that all such dependencies defined as abstract members are defined.</p>
+
+<p>Note that we can declare all abstract members as <code>def</code>s, as they can be later implemented as <code>val</code>s, <code>lazy val</code>s, or left as <code>def</code>s. Using a <code>def</code> keeps all options possible.</p>
+
+<p>The wiring for our example code can be divided as follows; the classes are now grouped into packages:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+   <span class="k">class</span> <span class="nc">PointSwitcher</span><span class="o">()</span>
+   <span class="k">class</span> <span class="nc">TrainCarCoupler</span><span class="o">()</span>
+   <span class="k">class</span> <span class="nc">TrainShunter</span><span class="o">(</span>
+      <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">,</span> 
+      <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span><span class="o">)</span>
+<span class="o">}</span> 
+
+<span class="k">package</span> <span class="nn">loading</span> <span class="o">{</span>
+   <span class="k">class</span> <span class="nc">CraneController</span><span class="o">()</span>
+   <span class="k">class</span> <span class="nc">TrainLoader</span><span class="o">(</span>
+      <span class="n">craneController</span><span class="k">:</span> <span class="kt">CraneController</span><span class="o">,</span> 
+      <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">package</span> <span class="nn">station</span> <span class="o">{</span>
+   <span class="k">class</span> <span class="nc">TrainDispatch</span><span class="o">()</span>
+
+   <span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
+      <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
+      <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">,</span> 
+      <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span><span class="o">)</span> <span class="o">{</span>
+
+      <span class="k">def</span> <span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+   <span class="o">}</span>
+<span class="o">}</span> 
+</code></pre></div>
+<p>Each package has a corresponding trait-module. Note that the dependency between the <code>shunting</code> and <code>loading</code> packages is expressed using an abstract member:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+   <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span> 
+   <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">package</span> <span class="nn">loading</span> <span class="o">{</span>
+   <span class="k">trait</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">]</span> 
+
+      <span class="c1">// dependency of the module</span>
+      <span class="k">def</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span>
+   <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">package</span> <span class="nn">station</span> <span class="o">{</span>
+   <span class="k">trait</span> <span class="nc">StationModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">]</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+
+      <span class="c1">// dependencies of the module</span>
+      <span class="k">def</span> <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span> 
+      <span class="k">def</span> <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span>
+   <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span>
+      <span class="k">with</span> <span class="nc">LoadingModule</span>
+      <span class="k">with</span> <span class="nc">StationModule</span>
+
+   <span class="n">modules</span><span class="o">.</span><span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>   
+<span class="o">}</span>  
+</code></pre></div>
+<p>To implement dependencies this way a consistent naming convention is needed, as the abstract member is reconciled with the implementation by-name. Naming the values same as the classes, but with the initial letter lowercase is a good example of such a convention.</p>
+
+<p>This approach is in some parts similar to the Cake Pattern, hence the name: <strong>Thin Cake Pattern</strong>.</p>
+
+<h2>Expressing dependencies via self-types</h2>
+
+<p>Another way of expressing dependencies is by using self-types or extending other trait-modules. This way creates a much stronger connection between the two modules, instead of the looser coupled abstract member approach, however in some situations is desirable (e.g. when having a module-interface with multiple implementations, see below).</p>
+
+<p>For example, we could express the dependency between the shunting and loading modules and the station module by extending trait-module, instead of using the abstract members:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+
+   <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span> 
+   <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">package</span> <span class="nn">loading</span> <span class="o">{</span>
+   <span class="k">trait</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">]</span> 
+
+      <span class="c1">// dependency expressed using an abstract member</span>
+      <span class="k">def</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span>
+   <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">package</span> <span class="nn">station</span> <span class="o">{</span>
+   <span class="c1">// dependencies expressed using extends</span>
+   <span class="k">trait</span> <span class="nc">StationModule</span> <span class="k">extends</span> <span class="nc">ShuntingModule</span> <span class="k">with</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">]</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+
+   <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span>
+      <span class="k">with</span> <span class="nc">LoadingModule</span>
+      <span class="k">with</span> <span class="nc">StationModule</span>
+
+   <span class="n">modules</span><span class="o">.</span><span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>   
+<span class="o">}</span>   
+</code></pre></div>
+<p>A very similar effect would be achieved by using a self-type. </p>
+
+<p>This approach can also be useful to create bigger modules out of multiple smaller ones, without the need to re-express the dependencies of the smaller modules. Simply define a bigger-module-trait extending a number of smaller-module-traits.  </p>
+
+<p><a name="multiple"></a></p>
+
+<p><h1>Multiple implementations</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>Often there are cases when we have multiple implementations for some functionality, and we need to choose one depending on configuration. This can be modelled in at least two ways.</p>
+
+<p>Firstly, we can have a single module, which contains conditional logic choosing the right implementation. Suppose we have two options for train shunting, either the traditional one, or using teleportation, and a config flag:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+
+   <span class="k">trait</span> <span class="nc">TrainShunter</span>
+
+   <span class="k">class</span> <span class="nc">PointSwitcher</span><span class="o">()</span>
+   <span class="k">class</span> <span class="nc">TrainCarCoupler</span><span class="o">()</span>
+   <span class="k">class</span> <span class="nc">TraditionalTrainShunter</span><span class="o">(</span>
+      <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">,</span>
+      <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span><span class="o">)</span> 
+      <span class="k">extends</span> <span class="nc">TrainShunter</span>
+
+   <span class="k">class</span> <span class="nc">TeleportingTrainShunter</span><span class="o">()</span> <span class="k">extends</span> <span class="nc">TrainShunter</span>
+
+   <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="k">if</span> <span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="n">modern</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">wire</span><span class="o">[</span><span class="kt">TeleportingTrainShunter</span><span class="o">]</span>
+      <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+         <span class="n">wire</span><span class="o">[</span><span class="kt">TraditionalTrainShunter</span><span class="o">]</span>
+      <span class="o">}</span>  
+
+      <span class="k">def</span> <span class="n">config</span><span class="k">:</span> <span class="kt">Config</span>
+   <span class="o">}</span>
+<span class="o">}</span>  
+</code></pre></div>
+<p>Secondly, a module can have multiple implementations. In such a case, we can create an interface-module containing only abstract members, which are implemented in the proper modules. Such an interface-module can also be very useful for expressing dependencies (without relying on a naming convention), and creating very strong links:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+
+   <span class="k">trait</span> <span class="nc">TrainShunter</span>
+
+   <span class="k">class</span> <span class="nc">PointSwitcher</span><span class="o">()</span>
+   <span class="k">class</span> <span class="nc">TrainCarCoupler</span><span class="o">()</span>
+   <span class="k">class</span> <span class="nc">TraditionalTrainShunter</span><span class="o">(</span>
+      <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">,</span> 
+      <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span><span class="o">)</span> 
+      <span class="k">extends</span> <span class="nc">TrainShunter</span>
+
+   <span class="k">class</span> <span class="nc">TeleportingTrainShunter</span><span class="o">()</span> <span class="k">extends</span> <span class="nc">TrainShunter</span>
+
+   <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">def</span> <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span>
+   <span class="o">}</span>
+
+   <span class="k">trait</span> <span class="nc">TraditionalShuntingModule</span> <span class="k">extends</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TraditionalTrainShunter</span><span class="o">]</span>
+   <span class="o">}</span>
+
+   <span class="k">trait</span> <span class="nc">ModernShuntingModule</span> <span class="k">extends</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TeleportingTrainShunter</span><span class="o">]</span>
+   <span class="o">}</span> 
+<span class="o">}</span>  
+
+<span class="c1">// ...</span>
+
+<span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">val</span> <span class="n">traditionalModules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TraditionalShuntingModule</span>
+      <span class="k">with</span> <span class="nc">LoadingModule</span>
+      <span class="k">with</span> <span class="nc">StationModule</span>
+
+   <span class="k">val</span> <span class="n">modernModules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ModernShuntingModule</span>
+      <span class="k">with</span> <span class="nc">LoadingModule</span>
+      <span class="k">with</span> <span class="nc">StationModule</span> 
+
+   <span class="n">traditionalModules</span><span class="o">.</span><span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>   
+   <span class="n">modernModules</span><span class="o">.</span><span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>   
+<span class="o">}</span> 
+</code></pre></div>
+<p>The downside of this approach is that the module stack must be known at compile time (cannot be chosen dynamically). While it is possible to create 2 or 4 different stacks for a couple of config options, with increasing config options the number of stacks grows exponentially.</p>
+
+<p>The interface-trait-module and implementation-trait-module is in fact part of the approach taken by the Cake Pattern for expressing dependencies. However this results in quite a lot of boilerplate code, so it’s good to use only when needed.   </p>
+
+<p><a name="testing"></a></p>
+
+<p><h1>Testing</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>Individual components can be tested by providing mock/stub implementations of some of the dependencies.</p>
+
+<p>Moreover, when using the thin cake pattern, modules can be integration-tested, using the wiring defined in the module.</p>
+
+<p>Of course, we will need to provide some implementation (again, can be a mock/stub), for any dependencies expressed as abstract members. However, it is also possible to override some of the dependencies, to provide alternative implementations for testing. These implementations will be used to wire the graph fragment defined in the module.</p>
+
+<p>For example, to test our shunting module, we could mock the point switcher, which interacts with some external systems, and write an integration test:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="c1">// main code</span>
+
+<span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+   <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span> 
+   <span class="o">}</span>
+<span class="o">}</span> 
+
+<span class="c1">// test</span>
+<span class="k">class</span> <span class="nc">ShuntingModuleItTest</span> <span class="k">extends</span> <span class="nc">FlatSpec</span> <span class="o">{</span>
+   <span class="n">it</span> <span class="n">should</span> <span class="s">&quot;work&quot;</span> <span class="n">in</span> <span class="o">{</span>
+      <span class="c1">// given</span>
+      <span class="k">val</span> <span class="n">mockPointSwitcher</span> <span class="k">=</span> <span class="n">mock</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+
+      <span class="c1">// when</span>
+      <span class="k">val</span> <span class="n">moduleToTest</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+         <span class="c1">// the mock implementation will be used to wire the graph</span>
+         <span class="k">override</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">mockPointSwitcher</span>
+      <span class="o">}</span>
+      <span class="n">moduleToTest</span><span class="o">.</span><span class="n">trainShunter</span><span class="o">.</span><span class="n">shunt</span><span class="o">()</span>
+
+      <span class="c1">// then</span>
+      <span class="n">verify</span><span class="o">(</span><span class="n">mockPointSwitcher</span><span class="o">).</span><span class="n">switch</span><span class="o">(...)</span>
+   <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+<p><a name="interceptors"></a></p>
+
+<p><h1>Interceptors</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>Interceptors are very useful for implementing cross-cutting concerns, and are a part of almost every DI framework/container. While there’s no direct support for interceptors in Scala, with a thin library layer (provided by MacWire), it is easy to write and use interceptors.</p>
+
+<p>Using interceptors is a two-step process. First, we have to declare <em>what</em> should be intercepted. Ideally, this shouldn’t involve the implementation of the interceptor in any way. Secondly, we have to define what the interceptor does - the behaviour.</p>
+
+<p>To implement the first part, we will define an abstract interceptor, and apply it to selected values. Let’s say that we want to audit all point switches and car couplings events to some external system. To do that, we need to intercept all method calls on the <code>PointSwitcher</code> and <code>TrainCarCoupler</code> services:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+   <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span> 
+
+      <span class="k">def</span> <span class="n">logEvents</span><span class="k">:</span> <span class="kt">Interceptor</span>
+   <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>We have <em>declared</em> that we want to apply the <code>logEvents</code> interceptor to the <code>pointSwitcher</code> and <code>trainCarCoupler</code> services. Note that so far the implementation hasn’t been mentioned in any way. We are only using the abstract <code>Interceptor</code> trait, which has an <code>apply</code> method, returning an instance of the same type, as passed to it through the parameter.</p>
+
+<p>At some point we of course have to specify the implementation. We can do this as late as possible, the last point being the main entry point to the application: </p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span>
+      <span class="k">with</span> <span class="nc">LoadingModule</span>
+      <span class="k">with</span> <span class="nc">StationModule</span> <span class="o">{</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">logEvents</span> <span class="k">=</span> <span class="nc">ProxyingInterceptor</span> <span class="o">{</span> <span class="n">ctx</span> <span class="k">=&gt;</span>
+         <span class="n">println</span><span class="o">(</span><span class="s">&quot;Calling method: &quot;</span> <span class="o">+</span> <span class="n">ctx</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">getName</span><span class="o">())</span>
+         <span class="n">ctx</span><span class="o">.</span><span class="n">proceed</span><span class="o">()</span>
+      <span class="o">}</span>
+   <span class="o">}</span>
+
+   <span class="n">modules</span><span class="o">.</span><span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>   
+<span class="o">}</span>   
+</code></pre></div>
+<p>Here we have specified that we want to create a proxying interceptor (which will create a Java proxy), with the given behaviour on method invocation. Note that we could use any of the services defined in the modules, when handling the proxied call.</p>
+
+<p>For testing, it may be useful to skip interceptors. This can also easily be done by providing a no-op interceptor implementation:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">ShuntingModuleItTest</span> <span class="k">extends</span> <span class="nc">FlatSpec</span> <span class="o">{</span>
+   <span class="n">it</span> <span class="n">should</span> <span class="s">&quot;work&quot;</span> <span class="n">in</span> <span class="o">{</span>
+      <span class="c1">// given</span>
+      <span class="k">val</span> <span class="n">moduleToTest</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+         <span class="k">lazy</span> <span class="k">val</span> <span class="n">logEvents</span> <span class="k">=</span> <span class="nc">NoOpInterceptor</span>
+      <span class="o">}</span>
+
+      <span class="c1">// ...</span>
+   <span class="o">}</span>
+<span class="o">}</span> 
+</code></pre></div>
+<p><a name="advscopes"></a></p>
+
+<p><h1>Advanced scoping</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>Especially in web applications, it is useful to have scopes other than singleton and dependent - e.g. scopes tied to the duration of a request, or scopes tied to a user sessions. </p>
+
+<p>Like interceptors, a lot of the DI containers/frameworks contain support for different scopes. They may seem &quot;magical”, however they are in fact pretty simple.</p>
+
+<p>MacWire contains a general skeleton for defining scopes, similar to interceptors. The <code>Scope</code> trait defines two methods: <code>apply</code>, which when applied to an instance should create a scoped value, and <code>get</code>, to get the current underlying value of the scope. The scope’s life cycle is entirely managed by the implementor.</p>
+
+<p>Similarly to interceptors, usage of scopes is declarative, by using an abstract <code>Scope</code> value, and the definition can be provided as late as in the main application entry point.</p>
+
+<p>For example, in a Java servlet-based web project, to make the train dispatch session-scoped (new dispatch for each session), we would first need to declare the usage of the session scope:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">station</span> <span class="o">{</span>
+   <span class="k">trait</span> <span class="nc">StationModule</span> <span class="k">extends</span> <span class="nc">ShuntingModule</span> <span class="k">with</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">session</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+
+      <span class="k">def</span> <span class="n">session</span><span class="k">:</span> <span class="kt">Scope</span>
+
+   <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>When starting the application, we need to provide the implementation of the scope. Two implementations are shipped by default, a <code>NoOpScope</code> (useful for testing), and a <code>ThreadLocalScope</code>, which holds the &quot;current” scoped value in a thread-local variable (hence this implementation is only useful for synchronous web frameworks); the thread-local scope needs to be associated with a storage before each request:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span>
+      <span class="k">with</span> <span class="nc">LoadingModule</span>
+      <span class="k">with</span> <span class="nc">StationModule</span> <span class="o">{</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">session</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ThreadLocalScope</span>
+   <span class="o">}</span>
+
+   <span class="c1">// implement a filter which attaches the session to the scope</span>
+   <span class="c1">// use the filter in the server</span>
+
+   <span class="n">modules</span><span class="o">.</span><span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>   
+<span class="o">}</span>   
+</code></pre></div>
+<p>For an example session scope implementation, see the <a href="https://github.com/adamw/macwire">MacWire</a> site.  </p>
+
+<p><a name="dynamic"></a></p>
+
+<p><h1>Accessing the object graph dynamically</h1></p>
+
+<p><a href="#top">Back to top</a> </p>
+
+<p>While it would be great to be able to define in a type-safe way the whole object graph for an application upfront, there are cases when it is necessary to access and extend it dynamically. </p>
+
+<p>First use-case is when integrating with web frameworks. There it is often needed to access a wired instance by-class. Second use-case is dynamically creating instances of classes, which names are only known at run-time, such as plugins. </p>
+
+<p>Both of these use-cases are realised by the <code>Wired</code> class, which can be created given an instance of a module, containing the object graph, using the <code>wiredInModule</code> macro. Any <code>val</code>s, <code>lazy val</code>s and parameter-less <code>def</code>s will be available. </p>
+
+<p>If our train station management application had a plugin system, which could use any of the dependencies in the object graph, we could instantiate the plugins as follows:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">TrainStationPlugin</span> <span class="o">{</span>
+   <span class="k">def</span> <span class="n">init</span><span class="o">()</span><span class="k">:</span> <span class="kt">Unit</span>
+<span class="o">}</span>
+
+<span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ShuntingModule</span>
+      <span class="k">with</span> <span class="nc">LoadingModule</span>
+      <span class="k">with</span> <span class="nc">StationModule</span>
+
+   <span class="k">val</span> <span class="n">wired</span> <span class="k">=</span> <span class="n">wiredInModule</span><span class="o">(</span><span class="n">modules</span><span class="o">)</span>
+
+   <span class="k">val</span> <span class="n">plugins</span> <span class="k">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pluginClasses</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">pluginClass</span> <span class="k">=&gt;</span>
+      <span class="n">wired</span>
+         <span class="o">.</span><span class="n">wireClassInstanceByName</span><span class="o">(</span><span class="n">pluginClass</span><span class="o">)</span>
+         <span class="o">.</span><span class="n">asInstanceOf</span><span class="o">[</span><span class="kt">TrainStationPlugin</span><span class="o">]</span>
+   <span class="o">}</span>
+
+   <span class="n">plugins</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">init</span><span class="o">())</span>
+
+   <span class="n">modules</span><span class="o">.</span><span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>   
+<span class="o">}</span>   
+</code></pre></div>
+<p>An instance of <code>Wired</code> can be also extended with new instances and instance factories, using the <code>withInstances</code> and <code>withInstanceFactory</code> methods.</p>
+
+<p>For an example of integrating Dependency Injection and MacWire with Play! Framework, see the <a href="http://typesafe.com/activator/template/macwire-activator">Play+MacWire</a> activator.  </p>
+
+<p class="message">
+  Created using <a href="https://github.com/poole/poole">poole</a> and <a href="http://jekyllrb.com/">jekyll</a>.
+</p>
+
+    </div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-53088231-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </body>
+</html>
