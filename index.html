@@ -97,7 +97,7 @@
 
 <p>The means of injecting the dependencies vary from approach to approach, but the one we will be using here is passing dependencies through constructor parameters. Other possibilities include setter/field injection, or using a service locator. Hence, the essence of DI can be summarised as <em>using constructor parameters</em>.</p>
 
-<p>A very important aspect of DI is Inversion of Control. The service implementations have to be created &quot;outside&quot; the services, e.g. by a container or some wiring code. Using <code>new</code> directly is not allowed inside the services.</p>
+<p>A very important aspect of DI is Inversion of Control. The service implementations have to be created &quot;outside&quot; the services, e.g. by a container or some wiring code. Using <code>new</code> directly to create a dependency is not allowed inside the services.</p>
 
 <p>If you are not yet sold on DI, I recommend reading the <a href="https://github.com/google/guice/wiki/Motivation">motivation behind Guice</a>. It uses Java as the base language, but the ideas are the same and apply universally.</p>
 
