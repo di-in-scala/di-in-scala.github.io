@@ -80,7 +80,8 @@
 <p><a name="introduction"></a></p>
 
 <p><h1>Introduction</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p><a href="http://en.wikipedia.org/wiki/Dependency_injection">Dependency Injection (DI)</a> is a popular pattern which encourages loose coupling between a services’ clients and service implementations.</p>
 
@@ -153,7 +154,8 @@
 <p><a name="manual"></a></p>
 
 <p><h1>Manual Dependency Injection</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>An approach that is often dismissed too easily is doing dependency injection by hand. While this requires a bit more typing, when doing things manually you are free from any constraints that a framework may impose, and hence a lot of flexibility is gained.</p>
 
@@ -216,7 +218,8 @@
 <p><a name="macwire"></a></p>
 
 <p><h1>Using MacWire for wiring</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>Manual DI isn’t of course a silver bullet. Manually writing new instance creation code for each class, using the correct parameters may be tedious.</p>
 
@@ -267,7 +270,8 @@
 <p><a name="simplescopes"></a></p>
 
 <p><h1>Simple scoping</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>So far all of the dependencies have been declared as <code>lazy val</code>s, making them essentially singletons in the scope of a single app usage. Note that these aren’t singletons in the global sense, as we can create multiple copies of the object graph.</p>
 
@@ -297,7 +301,8 @@
 <p><a name="modules"></a></p>
 
 <p><h1>Modularising object graph creation</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <h2>Thin cake pattern</h2>
 
@@ -437,7 +442,8 @@
 <p><a name="multiple"></a></p>
 
 <p><h1>Multiple implementations</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>Often there are cases when we have multiple implementations for some functionality, and we need to choose one depending on configuration. This can be modelled in at least two ways.</p>
 
@@ -518,7 +524,8 @@
 <p><a name="testing"></a></p>
 
 <p><h1>Testing</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>Individual components can be tested by providing mock/stub implementations of some of the dependencies.</p>
 
@@ -557,7 +564,8 @@
 <p><a name="interceptors"></a></p>
 
 <p><h1>Interceptors</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>Interceptors are very useful for implementing cross-cutting concerns, and are a part of almost every DI framework/container. While there’s no direct support for interceptors in Scala, with a thin library layer (provided by MacWire), it is easy to write and use interceptors.</p>
 
@@ -608,7 +616,8 @@
 <p><a name="advscopes"></a></p>
 
 <p><h1>Advanced scoping</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>Especially in web applications, it is useful to have scopes other than singleton and dependent - e.g. scopes tied to the duration of a request, or scopes tied to a user sessions. </p>
 
@@ -648,7 +657,8 @@
 <p><a name="dynamic"></a></p>
 
 <p><h1>Accessing the object graph dynamically</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <p>While it would be great to be able to define in a type-safe way the whole object graph for an application upfront, there are cases when it is necessary to access and extend it dynamically. </p>
 
@@ -686,7 +696,8 @@
 <p><a name="comments"></a></p>
 
 <p><h1>Comments</h1>
-  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> </p>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
 
 <div id="disqus_thread"></div>
 
