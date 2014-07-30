@@ -264,8 +264,57 @@
 
 <ul>
 <li>there are multiple values of a given type in the enclosing type, or in parent types</li>
-<li>there is no value of a given type<br></li>
+<li>there is no value of a given type</li>
 </ul>
+
+<h2>Using implicit parameters</h2>
+
+<p>A similar effect to the one described above can be achieved by using implicit parameters and implicit values. If all constructor parameters are marked as <code>implicit</code>, and all instances are marked as <code>implicit</code> when the object graph is wired, the Scala compiler will create the proper constructor calls.</p>
+
+<p>The class definitions then become:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">PointSwitcher</span><span class="o">()</span>
+<span class="k">class</span> <span class="nc">TrainCarCoupler</span><span class="o">()</span>
+<span class="k">class</span> <span class="nc">TrainShunter</span><span class="o">(</span>
+   <span class="k">implicit</span>
+   <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">,</span> 
+   <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span><span class="o">)</span>
+
+<span class="k">class</span> <span class="nc">CraneController</span><span class="o">()</span>
+<span class="k">class</span> <span class="nc">TrainLoader</span><span class="o">(</span>
+   <span class="k">implicit</span>
+   <span class="n">craneController</span><span class="k">:</span> <span class="kt">CraneController</span><span class="o">,</span> 
+   <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">)</span>
+
+<span class="k">class</span> <span class="nc">TrainDispatch</span><span class="o">()</span>
+
+<span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
+   <span class="k">implicit</span>
+   <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
+   <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">,</span> 
+   <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span><span class="o">)</span> <span class="o">{</span>
+
+   <span class="k">def</span> <span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>And the wiring:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+   <span class="k">implicit</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">PointSwitcher</span>
+   <span class="k">implicit</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainCarCoupler</span>
+   <span class="k">implicit</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainShunter</span>
+
+   <span class="k">implicit</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">CraneController</span>
+   <span class="k">implicit</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainLoader</span>
+
+   <span class="k">implicit</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainDispatch</span>
+
+   <span class="k">implicit</span> <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainStation</span>
+
+   <span class="n">trainStation</span><span class="o">.</span><span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>However, using implicits like that has two drawbacks. First of all, it is intrusive, as you have to mark the constructor parameter list of each class to be wired as <code>implicit</code>. That may not be desireable, and can cause the person reading the code to wonder why the parameters are implicit. </p>
+
+<p>Secondly, implicits are used in many other places in Scala for other, rather different purposes. Adding a large number of implicits as described here may lead to confusion. Still, such a style may be a perfect fit in some use-cases, of course!  </p>
 
 <p><a name="simplescopes"></a></p>
 
