@@ -73,6 +73,7 @@
 <li><a href="#testing">Testing</a></li>
 <li><a href="#interceptors">Interceptors</a></li>
 <li><a href="#advscopes">Advanced scoping</a></li>
+<li><a href="#factories">Factories</a></li>
 <li><a href="#dynamic">Accessing the object graph dynamically</a></li>
 <li><a href="#comments">Comments</a></li>
 </ul>
@@ -704,6 +705,65 @@
 <span class="o">}</span>   
 </code></pre></div>
 <p>For an example session scope implementation, see the <a href="https://github.com/adamw/macwire">MacWire</a> site.  </p>
+
+<p><a name="factories"></a></p>
+
+<p><h1>Factories</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
+
+<h2>Factories as functions</h2>
+
+<p>In the simplest form, a factory is simply a function: it is a parametrized way to create an object. You can also think of it is of a partially wired dependency.</p>
+
+<p>Let&#39;s say the <code>TrainLoader</code> additionally requires a <code>CarLoader</code> dependency parametrized by <code>CarType</code> (the type of the train car to load: coal, refrigerated, chemical etc.). As a convenience, we can create a type alias for the function, but that is entirerly optional. The definition of the <code>TrainLoader</code> class now becomes:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">CarLoaderFactory</span> <span class="o">=</span> <span class="nc">CarType</span> <span class="k">=&gt;</span> <span class="nc">CarLoader</span>
+
+<span class="k">class</span> <span class="nc">TrainLoader</span><span class="o">(</span>
+   <span class="n">craneController</span><span class="k">:</span> <span class="kt">CraneController</span><span class="o">,</span> 
+   <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">,</span>
+   <span class="n">carLoaderFactory</span><span class="k">:</span> <span class="kt">CarLoaderFactory</span><span class="o">)</span>
+</code></pre></div>
+<p>We can now wire <code>TrainLoader</code> as usual (either manually or using MacWire), however of course we need a dependency of type <code>CarLoaderFactory</code> defined somewhere; extending the <code>LoadingModule</code> we get:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">]</span> 
+
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">carLoaderFactory</span> <span class="k">=</span> <span class="o">(</span><span class="n">ct</span><span class="k">:</span> <span class="kt">CarType</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="k">new</span> <span class="nc">CarLoader</span><span class="o">(</span><span class="n">ct</span><span class="o">)</span>
+   <span class="c1">// or any other logic to instantiate a CarLoader</span>
+
+   <span class="c1">// dependency of the module</span>
+   <span class="k">def</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>Note that it is not yet possible to use <code>wire[]</code> inside an anonymous function - the function parameters will not be used for wiring. This will be added in future releases, see <a href="https://github.com/adamw/macwire/issues/25">#25</a>.</p>
+
+<h2>Factories in trait-modules</h2>
+
+<p>You can also create factories by defining methods directly in the trait-modules. The method parameters will be also used for wiring when using <code>wire[]</code>.</p>
+
+<p>Let&#39;s say the <code>TrainStation</code> requires an additional name:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
+   <span class="n">name</span><span class="k">:</span> <span class="kt">Name</span><span class="o">,</span>
+   <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
+   <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">,</span> 
+   <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span><span class="o">)</span> <span class="o">{</span>
+
+   <span class="k">def</span> <span class="n">prepareAndDispatchNextTrain</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>We can expose a parametrized train station in the module by defining a method with a name parameter:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">StationModule</span> <span class="o">{</span>
+      <span class="k">def</span> <span class="n">trainStation</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">Name</span><span class="o">)</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">]</span>
+
+      <span class="c1">// dependencies of the module</span>
+      <span class="k">def</span> <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span> 
+      <span class="k">def</span> <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>When retrieving an instance of a train station for the combined modules, we now have to provide a name. The method parameters, together with other dependencies looked up in the usual way, will be used to create a <code>TrainStation</code> instance.  </p>
 
 <p><a name="dynamic"></a></p>
 
