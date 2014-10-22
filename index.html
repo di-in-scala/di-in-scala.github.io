@@ -714,7 +714,7 @@
 
 <h2>Factories as functions</h2>
 
-<p>In the simplest form, a factory is simply a function: it is a parametrized way to create an object. You can also think of it is of a partially wired dependency.</p>
+<p>In the simplest form, a factory is a function: a parametrized way to create an object. You can also think of it is of a partially wired dependency.</p>
 
 <p>Let&#39;s say the <code>TrainLoader</code> additionally requires a <code>CarLoader</code> dependency parametrized by <code>CarType</code> (the type of the train car to load: coal, refrigerated, chemical etc.). As a convenience, we can create a type alias for the function, but that is entirerly optional. The definition of the <code>TrainLoader</code> class now becomes:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">CarLoaderFactory</span> <span class="o">=</span> <span class="nc">CarType</span> <span class="k">=&gt;</span> <span class="nc">CarLoader</span>
@@ -742,7 +742,7 @@
 
 <p>You can also create factories by defining methods directly in the trait-modules. The method parameters will be also used for wiring when using <code>wire[]</code>.</p>
 
-<p>Let&#39;s say the <code>TrainStation</code> requires an additional name:</p>
+<p>Let&#39;s say the <code>TrainStation</code> requires a name:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
    <span class="n">name</span><span class="k">:</span> <span class="kt">Name</span><span class="o">,</span>
    <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
@@ -763,7 +763,7 @@
       <span class="k">def</span> <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span>
 <span class="o">}</span>
 </code></pre></div>
-<p>When retrieving an instance of a train station for the combined modules, we now have to provide a name. The method parameters, together with other dependencies looked up in the usual way, will be used to create a <code>TrainStation</code> instance.  </p>
+<p>When retrieving an instance of a train station from the combined modules, we now have to provide a name. The method parameters, together with other dependencies looked up in the usual way, will be used to create a <code>TrainStation</code> instance.  </p>
 
 <p><a name="dynamic"></a></p>
 
