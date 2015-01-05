@@ -627,8 +627,10 @@
 <p>To implement the first part, we will define an abstract interceptor, and apply it to selected values. Let’s say that we want to audit all point switches and car couplings events to some external system. To do that, we need to intercept all method calls on the <code>PointSwitcher</code> and <code>TrainCarCoupler</code> services:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
    <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
-      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span> <span class="o">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">])</span>
-      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span> <span class="o">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span> <span class="o">=</span> 
+            <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span> <span class="o">=</span> 
+            <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">])</span>
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span> 
 
       <span class="k">def</span> <span class="n">logEvents</span><span class="k">:</span> <span class="kt">Interceptor</span>
@@ -683,8 +685,10 @@
 <p>For example, in a Java servlet-based web project, to make the train dispatch session-scoped (new dispatch for each session), we would first need to declare the usage of the session scope:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">station</span> <span class="o">{</span>
    <span class="k">trait</span> <span class="nc">StationModule</span> <span class="k">extends</span> <span class="nc">ShuntingModule</span> <span class="k">with</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
-      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span> <span class="k">=</span> <span class="n">session</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">])</span>
-      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span> <span class="o">=</span> 
+            <span class="n">session</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainDispatch</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span><span class="k">:</span> <span class="kt">TrainStation</span> <span class="o">=</span> 
+            <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
 
       <span class="k">def</span> <span class="n">session</span><span class="k">:</span> <span class="kt">Scope</span>
    <span class="o">}</span>
