@@ -51,7 +51,7 @@
     </ul>
 
     <p>
-      &copy; 2014 by
+      &copy; 2015 by
       <a href="http://twitter.com/adamwarski">Adam Warski</a>.
     </p>
   </div>
@@ -540,11 +540,12 @@
    <span class="k">class</span> <span class="nc">TeleportingTrainShunter</span><span class="o">()</span> <span class="k">extends</span> <span class="nc">TrainShunter</span>
 
    <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
+
       <span class="k">def</span> <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span>
    <span class="o">}</span>
 
    <span class="k">trait</span> <span class="nc">TraditionalShuntingModule</span> <span class="k">extends</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
-      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">]</span>
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">]</span>
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TraditionalTrainShunter</span><span class="o">]</span>
    <span class="o">}</span>
@@ -626,8 +627,8 @@
 <p>To implement the first part, we will define an abstract interceptor, and apply it to selected values. Let’s say that we want to audit all point switches and car couplings events to some external system. To do that, we need to intercept all method calls on the <code>PointSwitcher</code> and <code>TrainCarCoupler</code> services:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
    <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span>
-      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span> <span class="k">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">])</span>
-      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span> <span class="k">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span> <span class="o">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">PointSwitcher</span><span class="o">])</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainCarCoupler</span><span class="k">:</span> <span class="kt">TrainCarCoupler</span> <span class="o">=</span> <span class="n">logEvents</span><span class="o">(</span><span class="n">wire</span><span class="o">[</span><span class="kt">TrainCarCoupler</span><span class="o">])</span>
       <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainShunter</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainShunter</span><span class="o">]</span> 
 
       <span class="k">def</span> <span class="n">logEvents</span><span class="k">:</span> <span class="kt">Interceptor</span>
