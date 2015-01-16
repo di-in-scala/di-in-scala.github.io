@@ -75,6 +75,7 @@
 <li><a href="#advscopes">Advanced scoping</a></li>
 <li><a href="#factories">Factories</a></li>
 <li><a href="#dynamic">Accessing the object graph dynamically</a></li>
+<li><a href="#multipleinst">Multiple instances</a></li>
 <li><a href="#comments">Comments</a></li>
 </ul>
 
@@ -254,9 +255,10 @@
 <p>Given a class, the <code>wire</code> macro first inspects the primary constructor, to determine the dependencies needed. For each dependency it then looks for a value which is a subtype of the parameter’s type, in the enclosing method/class/object:</p>
 
 <ul>
-<li>first it tries to find a value declared in the enclosing method; if multiple values are found, a by-name match is attempted</li>
+<li>first it tries to find a value declared in the enclosing methods and anonymous functions</li>
 <li>then it tries to find a unique value declared in the enclosing type</li>
 <li>finally it tries to find a unique value in parent types (traits/classes)</li>
+<li>if the parameter is marked as implicit, additionally the usual implicit lookup mechanism is used</li>
 </ul>
 
 <p>Here value can be either a <code>val</code>, <code>lazy val</code> or a no-parameter <code>def</code>, as long as the return type matches.</p>
@@ -264,11 +266,12 @@
 <p>A compile-time error occurs if:</p>
 
 <ul>
-<li>there are multiple values of a given type in the enclosing type, or in parent types</li>
+<li>there are multiple values of a given type in the enclosing methods/anonymous functions, enclosing type, or in parent types</li>
+<li>parameter is marked as implicit and both implicit lookup and searching in enclosing scopes finds a value</li>
 <li>there is no value of a given type</li>
 </ul>
 
-<p><em>Note</em>: at the moment, the <code>wire</code> macro does not take into account definitions from within a method&#39;s body (only from the enclosing class/object/method parameters, as described above). For details see these issues: <a href="https://github.com/adamw/macwire/issues/11">#11</a> and <a href="https://github.com/adamw/macwire/issues/15">#15</a>.</p>
+<p><em>Note</em>: at the moment, the <code>wire</code> macro does not take into account definitions from within a method&#39;s body (only from the enclosing class/object/method/function parameters, as described above). For details see these issues: <a href="https://github.com/adamw/macwire/issues/11">#11</a> and <a href="https://github.com/adamw/macwire/issues/15">#15</a>.</p>
 
 <h2>Using implicit parameters</h2>
 
@@ -318,6 +321,10 @@
 <p>However, using implicits like that has two drawbacks. First of all, it is intrusive, as you have to mark the constructor parameter list of each class to be wired as <code>implicit</code>. That may not be desireable, and can cause the person reading the code to wonder why the parameters are implicit. </p>
 
 <p>Secondly, implicits are used in many other places in Scala for other, rather different purposes. Adding a large number of implicits as described here may lead to confusion. Still, such a style may be a perfect fit in some use-cases, of course!</p>
+
+<h2>Wiring using implicit values</h2>
+
+<p>It is also possible to take into account implict values when wiring using <code>wireImplicit</code>, even when looking for instances of non-implicit parameters. In this variant, for each constructor parameter, an implicit lookup will be done in addition to looking in the current scope. In case multiple values are found, a compile-time error will be reported.  </p>
 
 <p><a name="simplescopes"></a></p>
 
@@ -734,15 +741,14 @@
    <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
    <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">]</span> 
 
-   <span class="k">lazy</span> <span class="k">val</span> <span class="n">carLoaderFactory</span> <span class="k">=</span> <span class="o">(</span><span class="n">ct</span><span class="k">:</span> <span class="kt">CarType</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="k">new</span> <span class="nc">CarLoader</span><span class="o">(</span><span class="n">ct</span><span class="o">)</span>
-   <span class="c1">// or any other logic to instantiate a CarLoader</span>
+   <span class="k">lazy</span> <span class="k">val</span> <span class="n">carLoaderFactory</span> <span class="k">=</span> <span class="o">(</span><span class="n">ct</span><span class="k">:</span> <span class="kt">CarType</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CarLoader</span><span class="o">]</span>
+   <span class="c1">// the above wire will expand to: new CarLoader(ct). Can also </span>
+   <span class="c1">// be any other logic to instantiate a CarLoader</span>
 
    <span class="c1">// dependency of the module</span>
    <span class="k">def</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span>
 <span class="o">}</span>
 </code></pre></div>
-<p>Note that it is not yet possible to use <code>wire[]</code> inside an anonymous function - the function parameters will not be used for wiring. This will be added in future releases, see <a href="https://github.com/adamw/macwire/issues/25">#25</a>.</p>
-
 <h2>Factories in trait-modules</h2>
 
 <p>You can also create factories by defining methods directly in the trait-modules. The method parameters will be also used for wiring when using <code>wire[]</code>.</p>
@@ -808,6 +814,72 @@
 <p>An instance of <code>Wired</code> can be also extended with new instances and instance factories, using the <code>withInstances</code> and <code>withInstanceFactory</code> methods.</p>
 
 <p>For an example of integrating Dependency Injection and MacWire with Play! Framework, see the <a href="http://typesafe.com/activator/template/macwire-activator">Play+MacWire</a> activator.  </p>
+
+<p><a name="multipleinst"></a></p>
+
+<p><h1>Multiple instances</h1>
+  <span style="font-size: 75%"><a href="#top">&#8607; Back to top</a></span> 
+  <span style="font-size: 75%"><a href="#comments">&#8609; Comments</a></span> </p>
+
+<p>In some cases we have a couple of objects of the same type that we want to use as dependencies. For example, assume that our train station now needs two train loaders, one for regular freight, one for liquid freight:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
+   <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
+   <span class="n">regularTrainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">,</span>  
+   <span class="n">liquidTrainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">,</span> 
+   <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+</code></pre></div>
+<p>In our wiring code we then need to create the two instances:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">lazy</span> <span class="k">val</span> <span class="n">regularTrainLoader</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainLoader</span><span class="o">(...)</span>
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">liquidTrainLoader</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainLoader</span><span class="o">(...)</span>
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainStation</span><span class="o">(</span>
+   <span class="n">trainShunter</span><span class="o">,</span>
+   <span class="n">regularTrainLoader</span><span class="o">,</span>
+   <span class="n">liquidTrainLoader</span><span class="o">)</span>
+</code></pre></div>
+<p>This is a perfectly good solution if we are using manual dependency injection - everything works as expected. One downside is that it&#39;s not entirely type-safe: if we mix-up the regular and liquid train loaders when passing them as arguments to the <code>TrainStation</code> constructor, everything will still compile just fine.</p>
+
+<p>However, if we try to use MacWire (or implicits), compilation will fail: MacWire has no chances of knowing, which instance should be used where. We need to somehow differentiate the instances so that the compiler will be able to tell which goes where.</p>
+
+<h2>Using different types</h2>
+
+<p>The first solution is to give the two dependencies distinct types, however of course that is not always possible. In our case, these might be for example traits, or subclasses:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
+   <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
+   <span class="n">regularTrainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span> <span class="kt">with</span> <span class="kt">Regular</span><span class="o">,</span>  
+   <span class="n">liquidTrainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span> <span class="kt">with</span> <span class="kt">Liquid</span><span class="o">,</span> 
+   <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">regularTrainLoader</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainLoader</span><span class="o">(...)</span> <span class="k">with</span> <span class="nc">Regular</span>
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">liquidTrainLoader</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TrainLoader</span><span class="o">(...)</span> <span class="k">with</span> <span class="nc">Liquid</span>
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+</code></pre></div>
+<p>This is also a type-safe solution, we are now <strong>not</strong> able to mix up the two dependencies when passing them as arguments to <code>TrainStation</code>.</p>
+
+<h2>Using qualifiers/tags</h2>
+
+<p>Another solution is to use tagging from MacWire, which is inspired by the work of <a href="https://gist.github.com/milessabin/89c9b47a91017973a35f">Miles Sabin</a> and what is present in <a href="https://github.com/scalaz/scalaz">Scalaz</a>. </p>
+
+<p>A tag is a Scala trait, usually an empty one. An instance of type <code>X</code> tagged with tag <code>T</code> has type <code>X @@ T</code>, or <code>Tagged[X, T]</code>, depending which syntax you prefer. You can add tags to instances using the <code>x.taggedWith[T]</code> method available on any type. All these declarations can be brough into scope by importing <code>com.softwaremill.macwire._</code>.</p>
+
+<p>The tags follow proper subtyping rules: <code>X &lt;: X @@ T</code>, so you can use a tagged instance if an untagged one is required. On the other hand, <code>X @@ T1</code> is not a subtype of <code>X @@ T2</code> if <code>T1</code> and <code>T2</code> are distinct, so you are safe from using the wrong instance with the wrong tag. </p>
+
+<p>Tags incur zero runtime overhead, they are a purely compile-time construct.</p>
+
+<p>Our train station dependencies and wiring can then be expressed in the following way:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">trait</span> <span class="nc">Regular</span>
+<span class="k">trait</span> <span class="nc">Liquid</span>
+
+<span class="k">class</span> <span class="nc">TrainStation</span><span class="o">(</span>
+   <span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">,</span> 
+   <span class="n">regularTrainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span> <span class="kt">@@</span> <span class="kt">Regular</span><span class="o">,</span>  
+   <span class="n">liquidTrainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span> <span class="kt">@@</span> <span class="kt">Liquid</span><span class="o">,</span> 
+   <span class="n">trainDispatch</span><span class="k">:</span> <span class="kt">TrainDispatch</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">regularTrainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">].</span><span class="n">taggedAs</span><span class="o">[</span><span class="kt">Regular</span><span class="o">]</span>
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">liquidTrainLoader</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainLoader</span><span class="o">].</span><span class="n">taggedAs</span><span class="o">[</span><span class="kt">Liquid</span><span class="o">]</span>
+<span class="k">lazy</span> <span class="k">val</span> <span class="n">trainStation</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">TrainStation</span><span class="o">]</span>
+</code></pre></div>
+<p>Note that you can use any form of &quot;tagging&quot; instances (e.g. the one from Scalaz), MacWire does not require to use the tags from its distribution. The only thing MacWire does during wiring is regular Scala subtype checks.  </p>
 
 <p><a name="comments"></a></p>
 
