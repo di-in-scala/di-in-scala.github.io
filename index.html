@@ -249,17 +249,17 @@
 
 <p>Usage of the <code>wire</code> macro can be mixed with creating new instances by hand; this may be needed if, as discussed earlier, creating a new instance isn’t that straightforward.</p>
 
-<p>To access <code>wire</code>, you can either import the <code>com.softwaremill.macwire._</code> package object, or extend the <code>Macwire</code> trait. For details on how to integrate MacWire into your project, see the <a href="https://github.com/adamw/macwire">GitHub page</a>.</p>
+<p>To access <code>wire</code>, you should import <code>com.softwaremill.macwire._</code>. For details on how to integrate MacWire into your project, see the <a href="https://github.com/adamw/macwire">GitHub page</a>.</p>
 
 <h2>How <code>wire</code> works</h2>
 
-<p>Given a class, the <code>wire</code> macro first inspects the primary constructor, to determine the dependencies needed. For each dependency it then looks for a value which is a subtype of the parameter’s type, in the enclosing method/class/object:</p>
+<p>Given a class, the <code>wire</code> macro first tries to find a constructor annotated with <code>@Inject</code>, then the (non-private) primary constructor, and finally an <code>apply</code> method in the companion object, to determine the dependencies needed. For each dependency it then looks for a value which conforms to the parameter’s type, in the enclosing method/class/object:</p>
 
 <ul>
-<li>first it tries to find a value declared in the enclosing methods and anonymous functions</li>
-<li>then it tries to find a unique value declared in the enclosing type</li>
+<li>first it tries to find a unique value declared as a value in the current block, argument of enclosing methods and anonymous functions</li>
+<li>then it tries to find a unique value declared or imported in the enclosing type</li>
 <li>finally it tries to find a unique value in parent types (traits/classes)</li>
-<li>if the parameter is marked as implicit, additionally the usual implicit lookup mechanism is used</li>
+<li>if the parameter is marked as implicit, it is ignored by MacWire and handled by the normal implicit resolution mechanism</li>
 </ul>
 
 <p>Here value can be either a <code>val</code>, <code>lazy val</code> or a no-parameter <code>def</code>, as long as the return type matches.</p>
@@ -267,12 +267,10 @@
 <p>A compile-time error occurs if:</p>
 
 <ul>
-<li>there are multiple values of a given type in the enclosing methods/anonymous functions, enclosing type, or in parent types</li>
-<li>parameter is marked as implicit and both implicit lookup and searching in enclosing scopes finds a value</li>
+<li>there are multiple values of a given type declared in the enclosing block/method/function&#39;s arguments list, enclosing type or its parents</li>
+<li>parameter is marked as implicit and implicit lookup fails to find a value</li>
 <li>there is no value of a given type</li>
 </ul>
-
-<p><em>Note</em>: at the moment, the <code>wire</code> macro does not take into account definitions from within a method&#39;s body (only from the enclosing class/object/method/function parameters, as described above). For details see these issues: <a href="https://github.com/adamw/macwire/issues/11">#11</a> and <a href="https://github.com/adamw/macwire/issues/15">#15</a>.</p>
 
 <h2>Using implicit parameters</h2>
 
@@ -321,11 +319,7 @@
 </code></pre></div>
 <p>However, using implicits like that has two drawbacks. First of all, it is intrusive, as you have to mark the constructor parameter list of each class to be wired as <code>implicit</code>. That may not be desireable, and can cause the person reading the code to wonder why the parameters are implicit. </p>
 
-<p>Secondly, implicits are used in many other places in Scala for other, rather different purposes. Adding a large number of implicits as described here may lead to confusion. Still, such a style may be a perfect fit in some use-cases, of course!</p>
-
-<h2>Wiring using implicit values</h2>
-
-<p>It is also possible to take into account implict values when wiring using <code>wireImplicit</code>, even when looking for instances of non-implicit parameters. In this variant, for each constructor parameter, an implicit lookup will be done in addition to looking in the current scope. In case multiple values are found, a compile-time error will be reported.  </p>
+<p>Secondly, implicits are used in many other places in Scala for other, rather different purposes. Adding a large number of implicits as described here may lead to confusion. Still, such a style may be a perfect fit in some use-cases, of course!  </p>
 
 <p><a name="simplescopes"></a></p>
 
@@ -497,7 +491,56 @@
 </code></pre></div>
 <p>A very similar effect would be achieved by using a self-type. </p>
 
-<p>This approach can also be useful to create bigger modules out of multiple smaller ones, without the need to re-express the dependencies of the smaller modules. Simply define a bigger-module-trait extending a number of smaller-module-traits.  </p>
+<p>This approach can also be useful to create bigger modules out of multiple smaller ones, without the need to re-express the dependencies of the smaller modules. Simply define a bigger-module-trait extending a number of smaller-module-traits.</p>
+
+<h2>Composing modules</h2>
+
+<p>Modules can be also combined using composition, that is you can nest modules as members and use dependencies defined in the nested modules to wire objects.</p>
+
+<p>For example, we can add a plugin to our train management application which will allow gathering statistics:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">stats</span> <span class="o">{</span>
+   <span class="k">class</span> <span class="nc">LoadingStats</span><span class="o">(</span><span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">)</span>
+   <span class="k">class</span> <span class="nc">ShuntingStats</span><span class="o">(</span><span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">)</span>
+
+   <span class="k">class</span> <span class="nc">StatsModule</span><span class="o">(</span>
+      <span class="n">shuntingModule</span><span class="k">:</span> <span class="kt">ShuntingModule</span><span class="o">,</span>
+      <span class="n">loadingModule</span><span class="k">:</span> <span class="kt">LoadingModule</span><span class="o">)</span> <span class="o">{</span>
+
+      <span class="k">import</span> <span class="nn">shuntingModule._</span>
+      <span class="k">import</span> <span class="nn">loadingModule._</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">loadingStats</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">LoadingStats</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">shuntingStats</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">ShuntingStats</span><span class="o">]</span>    
+   <span class="o">}</span>   
+<span class="o">}</span>
+</code></pre></div>
+<p>Note the <code>import</code> statements, which bring any dependencies defined in the nested modules into scope.</p>
+
+<p>This can be further shortened by using an experimental <code>@Module</code> annotation for module <code>trait</code>s/<code>class</code>es; members of nested modules with that annotaiton will be taken into account automatically during wiring:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">loading</span> <span class="o">{</span>
+   <span class="nd">@Module</span>
+   <span class="k">trait</span> <span class="nc">LoadingModule</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">package</span> <span class="nn">shunting</span> <span class="o">{</span>
+   <span class="nd">@Module</span>
+   <span class="k">trait</span> <span class="nc">ShuntingModule</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">package</span> <span class="nn">stats</span> <span class="o">{</span>
+   <span class="k">class</span> <span class="nc">LoadingStats</span><span class="o">(</span><span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span><span class="o">)</span>
+   <span class="k">class</span> <span class="nc">ShuntingStats</span><span class="o">(</span><span class="n">trainShunter</span><span class="k">:</span> <span class="kt">TrainShunter</span><span class="o">)</span>
+
+   <span class="k">class</span> <span class="nc">StatsModule</span><span class="o">(</span>
+      <span class="n">shuntingModule</span><span class="k">:</span> <span class="kt">ShuntingModule</span><span class="o">,</span>
+      <span class="n">loadingModule</span><span class="k">:</span> <span class="kt">LoadingModule</span><span class="o">)</span> <span class="o">{</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">loadingStats</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">LoadingStats</span><span class="o">]</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">shuntingStats</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">ShuntingStats</span><span class="o">]</span>    
+   <span class="o">}</span>   
+<span class="o">}</span>
+</code></pre></div>
+<p>In this scenario no imports are necessary.  </p>
 
 <p><a name="multiple"></a></p>
 
@@ -775,8 +818,37 @@
       <span class="k">def</span> <span class="n">trainLoader</span><span class="k">:</span> <span class="kt">TrainLoader</span>
 <span class="o">}</span>
 </code></pre></div>
-<p>When retrieving an instance of a train station from the combined modules, we now have to provide a name. The method parameters, together with other dependencies looked up in the usual way, will be used to create a <code>TrainStation</code> instance.  </p>
+<p>When retrieving an instance of a train station from the combined modules, we now have to provide a name. The method parameters, together with other dependencies looked up in the usual way, will be used to create a <code>TrainStation</code> instance.</p>
 
+<h2>Wiring using factory methods</h2>
+
+<p>Using MacWire, it is also possible to wire objects with a factory method instead of a constructor. For example, suppose that instances of <code>TrainLoader</code> needs to be created using a special method which passes some numeric parameters to the crane; in such situations, we can use <code>wireWith</code>:</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">package</span> <span class="nn">loading</span> <span class="o">{</span>
+   <span class="k">class</span> <span class="nc">TrainLoader</span><span class="o">(</span>
+      <span class="n">craneController</span><span class="k">:</span> <span class="kt">CraneController</span><span class="o">,</span> 
+      <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">,</span>
+      <span class="n">xAxisCoefficient</span><span class="k">:</span> <span class="kt">Double</span><span class="o">,</span>
+      <span class="n">yAxisCoefficient</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span>
+
+   <span class="k">object</span> <span class="nc">TrainLoader</span> <span class="o">{</span>
+      <span class="k">def</span> <span class="n">createDefault</span><span class="o">(</span>
+         <span class="n">craneController</span><span class="k">:</span> <span class="kt">CraneController</span><span class="o">,</span> 
+         <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span><span class="o">)</span> <span class="k">=</span>
+         <span class="k">new</span> <span class="nc">TrainLoader</span><span class="o">(</span><span class="n">craneController</span><span class="o">,</span> <span class="n">pointSwitcher</span><span class="o">,</span>
+            <span class="mf">10.0</span><span class="o">,</span> <span class="mf">12.5</span><span class="o">)</span> 
+   <span class="o">}</span>  
+
+   <span class="k">trait</span> <span class="nc">LoadingModule</span> <span class="o">{</span>
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">craneController</span> <span class="k">=</span> <span class="n">wire</span><span class="o">[</span><span class="kt">CraneController</span><span class="o">]</span>
+
+      <span class="k">lazy</span> <span class="k">val</span> <span class="n">trainLoader</span> <span class="k">=</span> <span class="n">wireWith</span><span class="o">(</span><span class="nc">TrainLoader</span><span class="o">.</span><span class="n">createDefault</span><span class="o">)</span> 
+
+      <span class="c1">// dependency of the module</span>
+      <span class="k">def</span> <span class="n">pointSwitcher</span><span class="k">:</span> <span class="kt">PointSwitcher</span>
+   <span class="o">}</span> 
+<span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
 <p><a name="dynamic"></a></p>
 
 <p><h1>Accessing the object graph dynamically</h1>
