@@ -770,7 +770,7 @@
 
 <h2>Factories as functions</h2>
 
-<p>In the simplest form, a factory is a function: a parametrized way to create an object. You can also think of it is of a partially wired dependency.</p>
+<p>In the simplest form, a factory is a function: a parametrized way to create an object. You can also think of it as a partially wired dependency.</p>
 
 <p>Let&#39;s say the <code>TrainLoader</code> additionally requires a <code>CarLoader</code> dependency parametrized by <code>CarType</code> (the type of the train car to load: coal, refrigerated, chemical etc.). As a convenience, we can create a type alias for the function, but that is entirerly optional. The definition of the <code>TrainLoader</code> class now becomes:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">type</span> <span class="kt">CarLoaderFactory</span> <span class="o">=</span> <span class="nc">CarType</span> <span class="k">=&gt;</span> <span class="nc">CarLoader</span>
@@ -1053,7 +1053,7 @@
 <span class="c1">// usage; statically checked ActorRef types!</span>
 <span class="k">val</span> <span class="n">loadListener</span> <span class="k">=</span> <span class="n">actorSystem</span>
       <span class="o">.</span><span class="n">actorOf</span><span class="o">(</span><span class="nc">Props</span><span class="o">[</span><span class="kt">LoadListenerActor</span><span class="o">])</span>
-      <span class="o">.</span><span class="n">taggedWith</span><span class="o">[</span><span class="kt">LoadListner</span><span class="o">]</span>
+      <span class="o">.</span><span class="n">taggedWith</span><span class="o">[</span><span class="kt">LoadListener</span><span class="o">]</span>
 
 <span class="k">val</span> <span class="n">reactiveTrainDispatch</span> <span class="k">=</span> <span class="n">modules</span>
       <span class="o">.</span><span class="n">createReactiveTrainDispatch</span><span class="o">(</span><span class="n">loadListener</span><span class="o">)</span>
