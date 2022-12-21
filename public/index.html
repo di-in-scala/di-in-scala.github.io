@@ -220,7 +220,7 @@
 
 <p>Manual DI isn’t of course a silver bullet. Manually writing new instance creation code for each class, using the correct parameters may be tedious.</p>
 
-<p>That is where <a href="https://github.com/adamw/macwire">MacWire</a> and the <code>wire</code> method can help. <code>wire</code> is a <a href="http://scalamacros.org/">Scala Macro</a>, which generates the new instance creation code. </p>
+<p>That is where <a href="https://github.com/adamw/macwire">MacWire</a> and the <code>wire</code> method can help. <code>wire</code> is a <a href="https://docs.scala-lang.org/scala3/guides/macros/macros.html">Scala Macro</a>, which generates the new instance creation code. </p>
 
 <p>After using MacWire, the code becomes simpler:</p>
 <div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">object</span> <span class="nc">TrainStation</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
